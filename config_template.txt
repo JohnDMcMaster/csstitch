@@ -1,0 +1,9 @@
+# copy as config.txt and fill in
+cip-user       = 
+local-address  = 
+local-dir      = 
+local-dir-part = 
+local-hostname = 
+local-user     = 
+uxul-user      = 
+workspace      = 
