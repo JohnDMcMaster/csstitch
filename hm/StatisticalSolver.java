@@ -1,3 +1,8 @@
+/*
+Copyright Christian Sattler <sattler.christian@gmail.com>
+Modifications by John McMaster <JohnDMcMaster@gmail.com>
+*/
+
 package hm;
 
 import general.collections.Pair;
