@@ -64,7 +64,7 @@ public class StatisticalSolver<A extends Comparable<A>> {
             it.remove();
           else if (minDistX != 0 && key.getA().getClass() == Pair.class) {
             Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> k =
-                (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>) key;
+                (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>) (Object)key;
 
             int dx = Integer.signum(k.getA().getA() - k.getB().getA());
             int dy = Integer.signum(k.getA().getB() - k.getB().getB());

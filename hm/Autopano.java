@@ -417,8 +417,8 @@ public class Autopano {
     
     if (dx != 0 || dy != 0) {
       int[] dd = new int[2];
-      dd[0] = ((Pair<Integer, Integer>) a).getB() - ((Pair<Integer, Integer>) b).getB();
-      dd[1] = ((Pair<Integer, Integer>) a).getA() - ((Pair<Integer, Integer>) b).getA();
+      dd[0] = ((Pair<Integer, Integer>) (Object)a).getB() - ((Pair<Integer, Integer>) (Object)b).getB();
+      dd[1] = ((Pair<Integer, Integer>) (Object)a).getA() - ((Pair<Integer, Integer>) (Object)b).getA();
       
       if ((Math.abs(dd[0]) | Math.abs(dd[1])) != 1)
         throw new RuntimeException();
