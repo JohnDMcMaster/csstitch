@@ -22,7 +22,11 @@ public class Cache {
     
     String path = CACHE.getAbsolutePath() + "/" + String.format(filename, args);
     if (new File(path).exists())
-      return Streams.readObject(path);
+    {
+      System.out.println("Bad compile");
+      System.exit(1);
+      //return Streams.readObject(path);
+    }
     
     StackTraceElement caller = trace[2];
     Class<?> clasz = null;

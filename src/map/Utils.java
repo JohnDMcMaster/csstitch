@@ -174,8 +174,11 @@ public class Utils {
     for (int i = 0; i != transforms.length; ++i)
       transforms[i] = translation.after(stack.getTransform(i));
     
-    return new StitchStackProperties(stack.getImageSetProperties().toArray(
-        new ImageSetProperties[] {}), transforms);
+    System.out.println("Bad compile");
+    System.exit(1);
+	//return new StitchStackProperties(stack.getImageSetProperties().toArray(
+    //    new ImageSetProperties[] {}), transforms);
+  	return null;
   }
   
   public static int[] getSize(StitchStackProperties stack) {
