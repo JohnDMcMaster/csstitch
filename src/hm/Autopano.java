@@ -659,6 +659,7 @@ public class Autopano {
     return components;
   }
   
+  /*
   public static TreeMap<Pair<Integer, Integer>, String> prepareNamesZ80_10x(String dir)
       throws IOException {
     return prepareNamesAlternating(dir, new int[] {7, 7, 6, 6, 6, 6, 6}, true, false, "018.png");
@@ -847,22 +848,25 @@ public class Autopano {
       throws IOException {
     return prepareNamesAlternating(dir, new int[] {7, 7, 7, 7, 7, 7, 7, 7, 7, 0, 1}, false, false);
   }
+  */
   
   public static TreeMap<Pair<Integer, Integer>, String> prepareNames6522_t_clean_bf_20x(String dir)
       throws IOException {
     return prepareNamesAlternating(dir, new int[] {7, 7, 7, 7, 7, 7, 7, 7, 7}, false, false);
   }
   
+  /*
   public static TreeMap<Pair<Integer, Integer>, String> prepareNamesZ80_strp1_bf_20x(String dir)
       throws IOException {
     return prepareNamesAlternating(dir, new int[] {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8}, false, false);
   }
+  */
   
   public static void main(String[] args) throws IOException {
     final String[] identifiers = new String[] {"6522/t-clean/bf/20x"};
     final String version = "";
     
-    final String[] data = new String[identifiers.length];
+    final String[] dataDirs = new String[identifiers.length];
     final String[] matches = new String[identifiers.length];
     final String[] parameters = new String[identifiers.length];
     final String[] table = new String[identifiers.length];
@@ -870,7 +874,7 @@ public class Autopano {
     final String[] stitchImage = new String[identifiers.length];
     
     for (int i = 0; i != identifiers.length; ++i) {
-      data[i] = OTHER_DIR + "/" + identifiers[i] + "/data";
+      dataDirs[i] = OTHER_DIR + "/" + identifiers[i] + "/data";
       matches[i] = OTHER_DIR + "/" + identifiers[i] + "/matches";
       parameters[i] = OTHER_DIR + "/" + identifiers[i] + "/params" + version + ".txt";
       table[i] = OTHER_DIR + "/" + identifiers[i] + "/lookup" + version + ".txt";
@@ -879,7 +883,7 @@ public class Autopano {
     }
     
     final TreeMap<Pair<Integer, Integer>, String>[] names = new TreeMap[identifiers.length];
-    names[0] = prepareNames6522_t_clean_bf_20x(data[0]);
+    names[0] = prepareNames6522_t_clean_bf_20x(dataDirs[0]);
     
     for (Entry<Pair<Integer, Integer>, String> entry : names[0].entrySet())
       System.err.println(entry);
@@ -889,7 +893,7 @@ public class Autopano {
     neighbours[0] = findNeighbours(names[0].keySet(), 1.0, false);
     
     for (int i = 0; i != identifiers.length; ++i)
-      findKeypointsMulti(names[i], neighbours[i], data[i], matches[i], 800, 600, 4);
+      findKeypointsMulti(names[i], neighbours[i], dataDirs[i], matches[i], 800, 600, 4);
     
     for (int i = 0; i != identifiers.length; ++i) {
       System.err.println("layer " + i + ":");
@@ -919,7 +923,7 @@ public class Autopano {
       printLookup(names[i], table[i]);
     }
     
-    int[] size = getSize(data[0] + "/" + names[0].firstEntry().getValue());
+    int[] size = getSize(dataDirs[0] + "/" + names[0].firstEntry().getValue());
     System.err.println(size[0] + ", " + size[1]);
     
     //*
@@ -991,7 +995,7 @@ public class Autopano {
       BufferedImage[] images = new BufferedImage[sets[i].getNumImages()];
       for (int j = 0; j != images.length; ++j) {
         System.err.println("loading image " + j + "...");
-        images[j] = ImageIO.read(new File(data[i] + "/" + names[i].get(indexLookup.get(j))));
+        images[j] = ImageIO.read(new File(dataDirs[i] + "/" + names[i].get(indexLookup.get(j))));
       }
       
       BufferedImage result =
@@ -1009,7 +1013,7 @@ public class Autopano {
         for (int k = 0; k != numImages; ++k) {
           System.err.println("loading image " + k + "...");
           Sharpness.getChannel(
-              ImageIO.read(new File(data[i] + "/" + names[i].get(indexLookup.get(k)))),
+              ImageIO.read(new File(dataDirs[i] + "/" + names[i].get(indexLookup.get(k)))),
               matrices[k], j);
           contImages[k] = interpolator.getContinuousImage(matrices[k]);
         }
