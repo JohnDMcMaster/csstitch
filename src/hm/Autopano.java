@@ -83,9 +83,9 @@ public class Autopano {
         return line != null && line.matches(regex);
     }
     
-    public static TreeMap<Pair<Integer, Integer>, String> prepareNames(String identifier,
+    public static ImageCoordinateMap prepareNames(String identifier,
             String description, String scan) throws IOException {
-        TreeMap<Pair<Integer, Integer>, String> names = new TreeMap<Pair<Integer, Integer>, String>();
+        ImageCoordinateMap names = new ImageCoordinateMap();
         
         Pattern pattern = Pattern.compile("step \\(([0-9]+), ([0-9]+)\\)");
         
@@ -132,7 +132,7 @@ public class Autopano {
         return result;
     }
     
-    public static TreeMap<Pair<Integer, Integer>, String> prepareNamesAlternating(String dir,
+    public static ImageCoordinateMap prepareNamesAlternating(String dir,
             int[] widths, boolean down, boolean right, String... bad) throws IOException {
         System.out.println("preparing files from dir: " + dir);
         TreeSet<String> fileSet = readDir(dir);
@@ -144,7 +144,7 @@ public class Autopano {
         fileSet.removeAll(Arrays.asList(bad));
         String[] files = fileSet.toArray(new String[] {});
         
-        TreeMap<Pair<Integer, Integer>, String> result = new TreeMap<Pair<Integer, Integer>, String>();
+        ImageCoordinateMap result = new ImageCoordinateMap();
         
         int image = 0;
         
@@ -172,7 +172,7 @@ public class Autopano {
     }
         
     /*
-    Returns TreeMap<Pair<Integer, Integer>, String>
+    Returns ImageCoordinateMap
     	TreeMap<Pair<x coordinate, y coordinate>, file name>
     */
     public static ImageCoordinateMap prepareNamesStandardScan(String dir,
@@ -259,7 +259,7 @@ public class Autopano {
         return ImageOpsDouble.max(image);
     }
     
-    public static void prepareMonoImages(TreeMap<Pair<Integer, Integer>, String> names, String out,
+    public static void prepareMonoImages(ImageCoordinateMap names, String out,
             String tmp, String data, String mono, double quantil, double[][] light, int channel)
             throws IOException {
         for (Entry<Pair<Integer, Integer>, String> entry : names.entrySet()) {
@@ -657,10 +657,10 @@ public class Autopano {
     }
         
     /*
-        public static TreeMap<Pair<Integer, Integer>, String> prepareNamesAlternating(String dir,
+        public static ImageCoordinateMap prepareNamesAlternating(String dir,
             int[] widths, boolean down, boolean right, String... bad) throws IOException {
 	*/
-    public static TreeMap<Pair<Integer, Integer>, String> prepareNames6522_t_clean_bf_20x(String dir)
+    public static ImageCoordinateMap prepareNames6522_t_clean_bf_20x(String dir)
             throws IOException {
             //dir = 6522/t-clean/bf/20x/data
         return prepareNamesAlternating(dir, new int[] {7, 7, 7, 7, 7, 7, 7, 7, 7}, false, false);
@@ -686,7 +686,7 @@ public class Autopano {
             stitchImage[i] = OTHER_DIR + "/" + identifiers[i] + "/stitch" + version + ".png";
         }
         
-        final TreeMap<Pair<Integer, Integer>, String>[] names = new TreeMap[identifiers.length];
+        final ImageCoordinateMap[] names = new ImageCoordinateMap[identifiers.length];
         names[0] = prepareNames6522_t_clean_bf_20x(dataDirs[0]);
         if( names[0] == null )
         {
