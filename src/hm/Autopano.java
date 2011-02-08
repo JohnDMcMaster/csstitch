@@ -56,6 +56,10 @@ import test.Tagger;
 import general.collections.Pair;
 import general.execution.Command;
 
+class ImageCoordinateMap extends TreeMap<Pair<Integer, Integer>, String>
+{
+}
+
 public class Autopano {
     
     public static final String OTHER_DIR = "/home/noname/di/other";
@@ -169,14 +173,14 @@ public class Autopano {
         
     /*
     Returns TreeMap<Pair<Integer, Integer>, String>
-    	
+    	TreeMap<Pair<x coordinate, y coordinate>, file name>
     */
-    public static TreeMap<Pair<Integer, Integer>, String> prepareNamesStandardScan(String dir,
+    public static ImageCoordinateMap prepareNamesStandardScan(String dir,
             int width, int height, boolean down, boolean right, boolean mirror) throws IOException {
         TreeSet<String> fileSet = readDir(dir);
         String[] files = fileSet.toArray(new String[] {});
         
-        TreeMap<Pair<Integer, Integer>, String> result = new TreeMap<Pair<Integer, Integer>, String>();
+        ImageCoordinateMap result = new ImageCoordinateMap();
         
         if (mirror) {
             boolean bb = right;
