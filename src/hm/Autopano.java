@@ -60,10 +60,7 @@ class ImageCoordinateMap extends TreeMap<Pair<Integer, Integer>, String>
 {
 }
 
-public class Autopano {
-    
-    public static final String OTHER_DIR = "/home/noname/di/other";
-    
+public class Autopano {    
     private static ArrayList<Long> times = new ArrayList<Long>();
     
     public static void addTime(long x) {
@@ -83,6 +80,7 @@ public class Autopano {
         return line != null && line.matches(regex);
     }
     
+    /*
     public static ImageCoordinateMap prepareNames(String identifier,
             String description, String scan) throws IOException {
         ImageCoordinateMap names = new ImageCoordinateMap();
@@ -111,11 +109,34 @@ public class Autopano {
         
         return names;
     }
+    */
     
+    /*
+    public static TreeSet<String> readDirWithRemove(String dir, String remove) throws IOException {
+    {
+    	TreeSet<String> fileSet = doReadDir(dir);
+    	if( fileSet == null )
+    	{
+    		return null;
+    	}
+        fileSet.removeAll();
+        return fileSet.toArray(new String[] {});
+    }
+    */
+    
+    public static String[] readDir(String dir) throws IOException {
+    	TreeSet<String> fileSet = doReadDir(dir);
+    	if( fileSet == null )
+    	{
+    		return null;
+    	}
+        return fileSet.toArray(new String[] {});
+    }
+
     /*
     Get of all of the regular files in a dir, ie not . and ..
     */
-    public static TreeSet<String> readDir(String dir) throws IOException {
+    public static TreeSet<String> doReadDir(String dir) throws IOException {
     	File file;
     	String[] dirList;
     	
@@ -132,16 +153,16 @@ public class Autopano {
         return result;
     }
     
+    /*
     public static ImageCoordinateMap prepareNamesAlternating(String dir,
             int[] widths, boolean down, boolean right, String... bad) throws IOException {
         System.out.println("preparing files from dir: " + dir);
-        TreeSet<String> fileSet = readDir(dir);
+        TreeSet<String> fileSet = readDirWithRemove(dir, Arrays.asList(bad));
         if( fileSet == null )
         {
         	System.out.println("Failed to read dir: " + dir);
         	return null;
         }
-        fileSet.removeAll(Arrays.asList(bad));
         String[] files = fileSet.toArray(new String[] {});
         
         ImageCoordinateMap result = new ImageCoordinateMap();
@@ -170,6 +191,79 @@ public class Autopano {
         
         return result;
     }
+	*/
+
+    public static ImageCoordinateMap prepareNamesDirAuto(String dir) throws IOException {
+    	/*
+    	Test set starts in lower right hand corner
+    	y up, x left
+    	
+    	cols = 11
+    	rows = 15
+    	*/
+    	
+        ImageCoordinateMap result = new ImageCoordinateMap();
+    	int cols = 11;
+    	int rows = 15;
+	    String[] files = readDir(dir);
+	    if( files == null )
+	    {
+	    	return null;
+	    }
+	    
+	    int file_index = 0;
+	    
+		for( int cur_col = 0; cur_col < cols; ++cur_col )
+		{
+			for( int cur_row = 0; cur_row < rows; ++cur_row )
+			{
+                result.put(new Pair<Integer, Integer>(cur_row, cur_col),
+                        files[file_index]);
+				++file_index;
+			}
+		}
+		return result;
+    }
+    
+    /*
+    public static ImageCoordinateMap prepareNamesPr0nCNCJSON(String jsonFileName) throws IOException {
+        String[] files = readDir(dir);
+        
+        ImageCoordinateMap result = new ImageCoordinateMap();
+        
+        if (mirror) {
+            boolean bb = right;
+            right = down;
+            down = bb;
+        }
+        
+        int image = 0;
+        
+        for (int y = 0; y != (mirror ? width : height); ++y)
+            for (int x = 0; x != (mirror ? height : width); ++x) {
+                int xx = x;
+                int yy = y;
+                
+                if (mirror) {
+                    int tt = xx;
+                    xx = yy;
+                    yy = tt;
+                }
+                
+                xx = right ? width - 1 - xx : xx;
+                yy = down ? height - 1 - yy : yy;
+                
+                result.put(new Pair<Integer, Integer>(yy, xx), files[image]);
+                
+                ++image;
+            }
+        
+        if (image != files.length)
+            throw new RuntimeException();
+        
+        return result;
+    }
+    */
         
     /*
     Returns ImageCoordinateMap
@@ -177,8 +271,7 @@ public class Autopano {
     */
     public static ImageCoordinateMap prepareNamesStandardScan(String dir,
             int width, int height, boolean down, boolean right, boolean mirror) throws IOException {
-        TreeSet<String> fileSet = readDir(dir);
-        String[] files = fileSet.toArray(new String[] {});
+        String[] files = readDir(dir);
         
         ImageCoordinateMap result = new ImageCoordinateMap();
         
@@ -660,15 +753,40 @@ public class Autopano {
         public static ImageCoordinateMap prepareNamesAlternating(String dir,
             int[] widths, boolean down, boolean right, String... bad) throws IOException {
 	*/
+	/*
     public static ImageCoordinateMap prepareNames6522_t_clean_bf_20x(String dir)
             throws IOException {
             //dir = 6522/t-clean/bf/20x/data
         return prepareNamesAlternating(dir, new int[] {7, 7, 7, 7, 7, 7, 7, 7, 7}, false, false);
     }
+    */
+    
+    public static void usage()
+    {
+    	System.out.println("autopanocs");
+    	System.out.println("Copyright Christian Sattler <sattler.christian@gmail.com>");
+		System.out.println("Modifications by John McMaster <JohnDMcMaster@gmail.com>");
+    	System.out.println("Usage");
+    	System.out.println("autopanocs [options] <identifierr> <identifier> ...");
+    	System.out.println("identifier: top level image dir w/ images in subdir \"data\"");
+    }
     
     public static void main(String[] args) throws IOException {
-        final String[] identifiers = new String[] {"6522/t-clean/bf/20x"};
+        for( int i = 0; i < args.length; ++i )
+        {
+        	System.out.println("args[" + "i" + "] = " + args[i]);
+        }
+        
+        //final String[] identifiers = new String[] {"6522/t-clean/bf/20x"};
+        final String[] identifiers = args;
         final String version = "";
+        
+        if( identifiers.length < 1 )
+        {
+        	System.out.println("Need at least one identifier\n");
+        	usage();
+        	System.exit(1);
+        }
         
         final String[] dataDirs = new String[identifiers.length];
         final String[] matches = new String[identifiers.length];
@@ -678,16 +796,17 @@ public class Autopano {
         final String[] stitchImage = new String[identifiers.length];
         
         for (int i = 0; i != identifiers.length; ++i) {
-            dataDirs[i] = OTHER_DIR + "/" + identifiers[i] + "/data";
-            matches[i] = OTHER_DIR + "/" + identifiers[i] + "/matches";
-            parameters[i] = OTHER_DIR + "/" + identifiers[i] + "/params" + version + ".txt";
-            table[i] = OTHER_DIR + "/" + identifiers[i] + "/lookup" + version + ".txt";
-            mapImage[i] = OTHER_DIR + "/" + identifiers[i] + "/map" + version + ".png";
-            stitchImage[i] = OTHER_DIR + "/" + identifiers[i] + "/stitch" + version + ".png";
+            dataDirs[i] = identifiers[i] + "/data";
+            matches[i] = identifiers[i] + "/matches";
+            parameters[i] = identifiers[i] + "/params" + version + ".txt";
+            table[i] = identifiers[i] + "/lookup" + version + ".txt";
+            mapImage[i] = identifiers[i] + "/map" + version + ".png";
+            stitchImage[i] = identifiers[i] + "/stitch" + version + ".png";
         }
         
         final ImageCoordinateMap[] names = new ImageCoordinateMap[identifiers.length];
-        names[0] = prepareNames6522_t_clean_bf_20x(dataDirs[0]);
+        //names[0] = prepareNames6522_t_clean_bf_20x(dataDirs[0]);
+        names[0] = prepareNamesDirAuto(dataDirs[0]);
         if( names[0] == null )
         {
         	System.out.println("Couldn't prepare names");
