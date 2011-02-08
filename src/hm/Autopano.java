@@ -108,8 +108,21 @@ public class Autopano {
     return names;
   }
   
+  /*
+  Get of all of the regular files in a dir, ie not . and ..
+  */
   public static TreeSet<String> readDir(String dir) throws IOException {
-    TreeSet<String> result = new TreeSet<String>(Arrays.asList(new File(dir).list()));
+  	File file;
+  	String[] dirList;
+  	
+  	file = new File(dir);
+  	if( !file.exists() )
+  	{
+  		System.out.println("couldn't open dir: " + dir);
+  		return null;
+  	}
+  	dirList = file.list();
+    TreeSet<String> result = new TreeSet<String>(Arrays.asList(dirList));
     result.remove(".");
     result.remove("..");
     return result;
@@ -117,7 +130,13 @@ public class Autopano {
   
   public static TreeMap<Pair<Integer, Integer>, String> prepareNamesAlternating(String dir,
       int[] widths, boolean down, boolean right, String... bad) throws IOException {
+    System.out.println("preparing files from dir: " + dir);
     TreeSet<String> fileSet = readDir(dir);
+    if( fileSet == null )
+    {
+    	System.out.println("Failed to read dir: " + dir);
+    	return null;
+    }
     fileSet.removeAll(Arrays.asList(bad));
     String[] files = fileSet.toArray(new String[] {});
     
@@ -659,6 +678,11 @@ public class Autopano {
     
     final TreeMap<Pair<Integer, Integer>, String>[] names = new TreeMap[identifiers.length];
     names[0] = prepareNames6522_t_clean_bf_20x(dataDirs[0]);
+    if( names[0] == null )
+    {
+    	System.out.print("Couldn't prepare names");
+    	System.exit(1);
+    }
     
     for (Entry<Pair<Integer, Integer>, String> entry : names[0].entrySet())
       System.err.println(entry);
