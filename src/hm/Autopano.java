@@ -203,8 +203,10 @@ public class Autopano {
     	*/
     	
         ImageCoordinateMap result = new ImageCoordinateMap();
-    	int cols = 11;
-    	int rows = 15;
+    	//int cols = 11;
+    	//int rows = 15;
+    	int cols = 2;
+    	int rows = 2;
 	    String[] files = readDir(dir);
 	    if( files == null )
 	    {
