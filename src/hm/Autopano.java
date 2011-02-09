@@ -56,9 +56,7 @@ import test.Tagger;
 import general.collections.Pair;
 import general.execution.Command;
 
-class ImageCoordinateMap extends TreeMap<Pair<Integer, Integer>, String>
-{
-}
+import hm.ImageCoordinateMap;
 
 public class Autopano {    
     private static ArrayList<Long> times = new ArrayList<Long>();
@@ -195,8 +193,18 @@ public class Autopano {
 
     public static ImageCoordinateMap prepareNamesDirAuto(String dir) throws IOException {
     	/*
-    	Test set starts in lower right hand corner
-    	y up, x left
+    	Its coordinate system is thus:
+    	
+    	 low              increasing  ---->     high
+    	
+    	increasing
+    	   |
+    	   \
+    	   \/
+    	  high
+    	
+    	NOTE: gthumb tries to use accelerometer data or something to reposition images, careful
+    	Current pr0ntools places (0, 0) at upper right in combination with my camera/microscope setup
     	
     	cols = 11
     	rows = 15
@@ -219,7 +227,7 @@ public class Autopano {
 		{
 			for( int cur_row = 0; cur_row < rows; ++cur_row )
 			{
-                result.put(new Pair<Integer, Integer>(cur_row, cur_col),
+                result.m_map.put(new Pair<Integer, Integer>(cols - cur_col - 1, rows - cur_row - 1),
                         files[file_index]);
 				++file_index;
 			}
@@ -299,7 +307,7 @@ public class Autopano {
                 xx = right ? width - 1 - xx : xx;
                 yy = down ? height - 1 - yy : yy;
                 
-                result.put(new Pair<Integer, Integer>(yy, xx), files[image]);
+                result.m_map.put(new Pair<Integer, Integer>(yy, xx), files[image]);
                 
                 ++image;
             }
@@ -357,7 +365,7 @@ public class Autopano {
     public static void prepareMonoImages(ImageCoordinateMap names, String out,
             String tmp, String data, String mono, double quantil, double[][] light, int channel)
             throws IOException {
-        for (Entry<Pair<Integer, Integer>, String> entry : names.entrySet()) {
+        for (Entry<Pair<Integer, Integer>, String> entry : names.m_map.entrySet()) {
             long start = System.currentTimeMillis();
             
             System.err.println(channel + ": " + entry.getKey());
@@ -468,14 +476,23 @@ public class Autopano {
         tokens.add("off");*/
         tokens.add(out);
         tokens.addAll(Arrays.asList(in));
+        String toExec = "";
+        String space = "";
+        for( int i = 0; i < tokens.size(); ++i )
+        {
+        	toExec += space + "\"" + tokens.get(i) + "\"";
+        	space = " ";
+        }
+        System.out.println(toExec);
         return new Command(tokens);
     }
     
+    /*
     public static <A extends Comparable<A>> void findKeypoints(TreeMap<A, String> names,
             Pair<A, A> entry, String in, String out) throws IOException {
         long start = System.currentTimeMillis();
         
-        System.err.println(entry);
+        System.err.println("findKeypoints: " + entry);
         
         A a = entry.getA();
         A b = entry.getB();
@@ -486,7 +503,10 @@ public class Autopano {
         String outName = out + "/" + names.get(a) + "-" + names.get(b) + ".pto";
         Tools.ensurePath(outName);
         if (new File(outName).exists())
+        {
+        	System.out.println("findKeypoints: project already exists");
             return;
+        }
         
         autopano(outName, inA, inB).executeChecked();
         
@@ -494,12 +514,13 @@ public class Autopano {
         
         addTime(end - start);
     }
+    */
     
     public static <A extends Comparable<A>> void findKeypoints(TreeMap<A, String> names,
             Pair<A, A> entry, String in, String out, int dx, int dy) throws IOException {
         long start = System.currentTimeMillis();
         
-        System.err.println(entry);
+        System.err.println("findKeypoints: " + entry);
         
         A a = entry.getA();
         A b = entry.getB();
@@ -510,8 +531,12 @@ public class Autopano {
         String outName = out + "/" + names.get(a) + "-" + names.get(b) + ".pto";
         Tools.ensurePath(outName);
         if (new File(outName).exists())
+        {
+        	System.out.println("findKeypoints: project already exists");
             return;
+        }
         
+        System.out.printf("dx: %d, dy: %d\n", dx, dy);
         if (dx != 0 || dy != 0) {
             int[] dd = new int[2];
             dd[0] = ((Pair<Integer, Integer>) (Object)a).getB() - ((Pair<Integer, Integer>) (Object)b).getB();
@@ -522,10 +547,12 @@ public class Autopano {
             
             BufferedImage[] images = new BufferedImage[2];
             images[0] = ImageIO.read(new File(inA));
+            System.out.printf("%s -> %s\n", inA, images[0]);
             images[1] = ImageIO.read(new File(inB));
+            System.out.printf("%s -> %s\n", inB, images[1]);
             
             int[][] bb = new int[2][4];
-            for (int i = 0; i != 2; ++i) {
+            for (int i = 0; i < 2; ++i) {
                 bb[i][0] = 0;
                 bb[i][1] = 0;
                 bb[i][2] = images[i].getWidth();
@@ -545,21 +572,25 @@ public class Autopano {
             }
             
             String[] rand = new String[3];
-            for (int i = 0; i != rand.length; ++i)
+            for (int i = 0; i < rand.length; ++i)
                 rand[i] = "/tmp/" + Math.random() + (i == 2 ? ".pto" : ".png");
             
-            for (int i = 0; i != 2; ++i)
+            for (int i = 0; i < 2; ++i)
+            {
                 ImageIO.write(
                         images[i].getSubimage(bb[i][0], bb[i][1], bb[i][2] - bb[i][0], bb[i][3] - bb[i][1]),
                         "png", new File(rand[i]));
+            	System.out.printf("%s -> %s\n", images[i], rand[i]);
+            }
             
+            System.out.println("Getting to autopano");
             // HACK: autopano crashes sometimes (when it doesn't find control points on strangely sized images?)
             int r = autopano(rand[2], rand[0], rand[1]).execute();
             if (r == 0) {
                 ArrayList<double[]> cp = StitchTools.readControlPoints(new File(rand[2]));
                 PrintStream print = new PrintStream(outName);
                 for (double[] p : cp) {
-                    for (int i = 0; i != 2; ++i) {
+                    for (int i = 0; i < 2; ++i) {
                         p[0] += bb[i][0];
                         p[1] += bb[i][1];
                     }
@@ -577,11 +608,14 @@ public class Autopano {
         addTime(end - start);
     }
     
+    /*
     public static <A extends Comparable<A>> void findKeypointsMulti(final TreeMap<A, String> names,
             final Collection<Pair<A, A>> neighbours, final String in, final String out) {
         findKeypointsMulti(names, neighbours, in, out, 4);
     }
+    */
     
+    /*
     public static <A extends Comparable<A>> void findKeypointsMulti(final TreeMap<A, String> names,
             final Collection<Pair<A, A>> neighbours, final String in, final String out, int numThreads) {
         ArrayList<Runnable> commands = new ArrayList<Runnable>();
@@ -601,10 +635,12 @@ public class Autopano {
         
         executeMultithreaded(commands, numThreads);
     }
+    */
     
     public static <A extends Comparable<A>> void findKeypointsMulti(final TreeMap<A, String> names,
             final Collection<Pair<A, A>> neighbours, final String in, final String out, final int dx,
             final int dy, int numThreads) {
+        System.out.println("findKeypointsMulti()");
         ArrayList<Runnable> commands = new ArrayList<Runnable>();
         for (Pair<A, A> pair : neighbours) {
             final Pair<A, A> p = pair;
@@ -632,9 +668,11 @@ public class Autopano {
         out.close();
     }
     
+    /*
     public static void executeMultithreaded(Collection<Runnable> commands) {
         executeMultithreaded(commands, 4);
     }
+    */
     
     public static void executeMultithreaded(Collection<Runnable> commands, int numThreads) {
         ExecutorService pool = Executors.newFixedThreadPool(numThreads);
@@ -815,21 +853,25 @@ public class Autopano {
         	System.exit(1);
         }
         
-        for (Entry<Pair<Integer, Integer>, String> entry : names[0].entrySet())
+        for (Entry<Pair<Integer, Integer>, String> entry : names[0].m_map.entrySet())
             System.err.println(entry);
         
         final TreeSet<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>>[] neighbours =
                 new TreeSet[identifiers.length];
-        neighbours[0] = findNeighbours(names[0].keySet(), 1.0, false);
+        neighbours[0] = findNeighbours(names[0].m_map.keySet(), 1.0, false);
         
-        for (int i = 0; i != identifiers.length; ++i)
-            findKeypointsMulti(names[i], neighbours[i], dataDirs[i], matches[i], 800, 600, 4);
+        System.out.println("iterating findKeypointsMulti");
+        for (int i = 0; i != identifiers.length; ++i) 
+        {
+            //FIXME: de-genericize this
+            findKeypointsMulti(names[i].m_map, neighbours[i], dataDirs[i], matches[i], 800, 600, 4);
+        }
         
         for (int i = 0; i != identifiers.length; ++i) {
             System.err.println("layer " + i + ":");
             
             ArrayList<TreeSet<Pair<Integer, Integer>>> components =
-                    findComponents(names[i], neighbours[i], matches[i], 1);
+                    findComponents(names[i].m_map, neighbours[i], matches[i], 1);
             TreeSet<Pair<Integer, Integer>> comp = null;
             for (TreeSet<Pair<Integer, Integer>> c : components) {
                 System.err.println("component of size " + c.size());
@@ -837,10 +879,10 @@ public class Autopano {
                     comp = c;
             }
             
-            System.err.println(names[i].size() + " images in layer " + i + ", " + comp.size()
+            System.err.println(names[i].m_map.size() + " images in layer " + i + ", " + comp.size()
                     + " in largest component");
             
-            for (Iterator it = names[i].keySet().iterator(); it.hasNext();)
+            for (Iterator it = names[i].m_map.keySet().iterator(); it.hasNext();)
                 if (!comp.contains(it.next()))
                     it.remove();
             
@@ -850,15 +892,15 @@ public class Autopano {
                     it.remove();
             }
             
-            printLookup(names[i], table[i]);
+            printLookup(names[i].m_map, table[i]);
         }
         
-        int[] size = getSize(dataDirs[0] + "/" + names[0].firstEntry().getValue());
+        int[] size = getSize(dataDirs[0] + "/" + names[0].m_map.firstEntry().getValue());
         System.err.println(size[0] + ", " + size[1]);
         
         //*
         StatisticalSolver stitcher =
-                new StatisticalSolver<Pair<Integer, Integer>>(size[0], size[1], 2, names, neighbours,
+                new StatisticalSolver(size[0], size[1], 2, names, neighbours,
                         matches, new double[] {1}, 500, 400);
         
         ImageSetProperties[] sets = stitcher.analyze(true);
@@ -915,7 +957,7 @@ public class Autopano {
             }
             
             TreeMap<Integer, Pair<Integer, Integer>> indexLookup =
-                    StitchTools.getIndexLookup(names[i].keySet());
+                    StitchTools.getIndexLookup(names[i].m_map.keySet());
             
             int outScale = 1;
             int inScale = 1;
@@ -925,7 +967,7 @@ public class Autopano {
             BufferedImage[] images = new BufferedImage[sets[i].getNumImages()];
             for (int j = 0; j != images.length; ++j) {
                 System.err.println("loading image " + j + "...");
-                images[j] = ImageIO.read(new File(dataDirs[i] + "/" + names[i].get(indexLookup.get(j))));
+                images[j] = ImageIO.read(new File(dataDirs[i] + "/" + names[i].m_map.get(indexLookup.get(j))));
             }
             
             BufferedImage result =
@@ -943,7 +985,7 @@ public class Autopano {
                 for (int k = 0; k != numImages; ++k) {
                     System.err.println("loading image " + k + "...");
                     Sharpness.getChannel(
-                            ImageIO.read(new File(dataDirs[i] + "/" + names[i].get(indexLookup.get(k)))),
+                            ImageIO.read(new File(dataDirs[i] + "/" + names[i].m_map.get(indexLookup.get(k)))),
                             matrices[k], j);
                     contImages[k] = interpolator.getContinuousImage(matrices[k]);
                 }
@@ -975,7 +1017,7 @@ public class Autopano {
             //*/
 
             //Tools.displayImages(result, colorMap);
-            System.err.println("writing result...");
+            System.err.println("writing result to " + stitchImage[i] + "...");
             ImageIO.write(result, "png", new File(stitchImage[i]));
         }
     }

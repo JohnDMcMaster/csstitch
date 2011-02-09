@@ -26,42 +26,44 @@ import map.properties.PerspectiveProperties;
 import stitcher.Stitcher4;
 import tools.LinearEquation;
 import tools.SumOfSquares;
+import hm.ImageCoordinateMap;
 
-public class StatisticalSolver<A extends Comparable<A>> {
+//Pair<Integer, Integer> = Pair<Integer, Integer>
+public class StatisticalSolver {
     
     private int sx, sy;
     private int numCoefs;
     
-    private TreeMap<A, String>[] names;
-    private TreeMap<String, A>[] nameLookup;
+    private ImageCoordinateMap[] names;
+    private TreeMap<String, Pair<Integer, Integer>>[] nameLookup;
     
-    private TreeMap<A, Integer>[] indices;
-    private TreeMap<Integer, A>[] indexLookup;
+    private TreeMap<Pair<Integer, Integer>, Integer>[] indices;
+    private TreeMap<Integer, Pair<Integer, Integer>>[] indexLookup;
     
     private String[] matchDir;
     
-    private TreeMap<Pair<A, A>, ArrayList<double[]>>[] controlPoints;
+    private TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, ArrayList<double[]>>[] controlPoints;
     private int numControlPoints;
-    private TreeMap<Pair<A, A>, TreeSet<Integer>>[] overlaps;
+    private TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, TreeSet<Integer>>[] overlaps;
     
     private double[][] factors;
     private double[] errors;
     
     private double[] values;
     
-    private void loadControlPoints(TreeSet<Pair<A, A>>[] neighbours, double[] probs, double minDistX,
+    private void loadControlPoints(TreeSet<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>>[] neighbours, double[] probs, double minDistX,
             double minDistY) throws IOException {
         controlPoints = new TreeMap[names.length];
         overlaps = new TreeMap[names.length];
         numControlPoints = 0;
         
         for (int i = 0; i != names.length; ++i) {
-            controlPoints[i] = new TreeMap<Pair<A, A>, ArrayList<double[]>>();
+            controlPoints[i] = new TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, ArrayList<double[]>>();
             
-            for (Pair<A, A> key : neighbours[i]) {
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> key : neighbours[i]) {
                 LinkedList<double[]> list =
                         new LinkedList<double[]>(StitchTools.readControlPoints(new File(matchDir[i] + "/"
-                                + names[i].get(key.getA()) + "-" + names[i].get(key.getB()) + ".pto")));
+                                + names[i].m_map.get(key.getA()) + "-" + names[i].m_map.get(key.getB()) + ".pto")));
                 
                 for (Iterator<double[]> it = list.iterator(); it.hasNext();) {
                     double[] p = it.next();
@@ -114,8 +116,8 @@ public class StatisticalSolver<A extends Comparable<A>> {
                 controlPoints[i].put(key, new ArrayList<double[]>(list));
             }
             
-            overlaps[i] = new TreeMap<Pair<A, A>, TreeSet<Integer>>();
-            for (Pair<A, A> key : neighbours[i]) {
+            overlaps[i] = new TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, TreeSet<Integer>>();
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> key : neighbours[i]) {
                 int size = controlPoints[i].get(key).size();
                 
                 TreeSet<Integer> set = new TreeSet<Integer>();
@@ -140,7 +142,7 @@ public class StatisticalSolver<A extends Comparable<A>> {
         int nameAcc = 0;
         
         for (int i = 0; i != names.length; ++i) {
-            for (Pair<A, A> p : controlPoints[i].keySet()) {
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> p : controlPoints[i].keySet()) {
                 for (double[] point : controlPoints[i].get(p)) {
                     double x0 = point[0] - 0.5 * (sx - 1);
                     double y0 = point[1] - 0.5 * (sy - 1);
@@ -254,7 +256,7 @@ public class StatisticalSolver<A extends Comparable<A>> {
         int nameAcc = 0;
         
         for (int i = 0; i != names.length; ++i) {
-            for (Pair<A, A> p : overlaps[i].keySet()) {
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> p : overlaps[i].keySet()) {
                 TreeSet<Integer> variables = new TreeSet<Integer>();
                 variables.add(2 * (nameAcc + indices[i].get(p.getB())) + 0);
                 variables.add(2 * (nameAcc + indices[i].get(p.getB())) + 1);
@@ -421,8 +423,11 @@ public class StatisticalSolver<A extends Comparable<A>> {
     }
     
     private void outputPositions() {
+if( true )
+return;
         int nameAcc = 0;
         for (int i = 0; i != names.length; ++i) {
+        	System.out.printf("names[i].size(): %d\n", names[i].size());
             for (int image = names[i].size() - 5; image != names[i].size(); ++image)
                 System.err.printf("(%06.2f, %06.2f)\n", values[2 * (nameAcc + image) + 0],
                         values[2 * (nameAcc + image) + 1]);
@@ -447,9 +452,9 @@ public class StatisticalSolver<A extends Comparable<A>> {
     
     private void checkOverlaps(Set<Integer> selection) {
         for (int i = 0; i != names.length; ++i) {
-            TreeMap<Pair<A, A>, double[]> shifts = new TreeMap<Pair<A, A>, double[]>();
+            TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, double[]> shifts = new TreeMap<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>, double[]>();
             
-            for (Pair<A, A> p : overlaps[i].keySet()) {
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> p : overlaps[i].keySet()) {
                 TreeSet<Integer> set = new TreeSet<Integer>(overlaps[i].get(p));
                 set.retainAll(selection);
                 if (set.isEmpty())
@@ -475,8 +480,8 @@ public class StatisticalSolver<A extends Comparable<A>> {
             
             int minNumPoints = Integer.MAX_VALUE, maxNumPoints = 0;
             double mean = 0, deviation = 0, max = 0;
-            Pair<A, A> maxIndex = null, minNumPointsIndex = null;
-            for (Pair<A, A> p : shifts.keySet()) {
+            Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> maxIndex = null, minNumPointsIndex = null;
+            for (Pair<Pair<Integer, Integer>, Pair<Integer, Integer>> p : shifts.keySet()) {
                 double[] s = shifts.get(p);
                 double e = Math.sqrt(s[0] * s[0] + s[1] * s[1]);
                 mean += e;
@@ -606,20 +611,28 @@ public class StatisticalSolver<A extends Comparable<A>> {
         return sets;
     }
     
-    public StatisticalSolver(int sx, int sy, int numCoefs, TreeMap<A, String> names,
-            TreeSet<Pair<A, A>> neighbours, String matchDir) throws IOException {
-        this(sx, sy, numCoefs, new TreeMap[] {names}, new TreeSet[] {neighbours},
+    /*
+	-    public StatisticalSolver(int sx, int sy, int numCoefs, TreeMap<A, String> names,
+	-            TreeSet<Pair<A, A>> neighbours, String matchDir) throws IOException {
+	*/
+    public StatisticalSolver(int sx, int sy, int numCoefs, ImageCoordinateMap names,
+            TreeSet<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>> neighbours, String matchDir) throws IOException {
+        this(sx, sy, numCoefs, new ImageCoordinateMap[] {names}, new TreeSet[] {neighbours},
                 new String[] {matchDir}, new double[] {1}, 0, 0);
     }
     
-    public StatisticalSolver(int sx, int sy, int numCoefs, TreeMap<A, String>[] names,
-            TreeSet<Pair<A, A>>[] neighbours, String[] matchDir, double[] probs, double minDistX,
+	/*     
+	-    public StatisticalSolver(int sx, int sy, int numCoefs, TreeMap<A, String>[] names,
+	-            TreeSet<Pair<A, A>>[] neighbours, String[] matchDir, double[] probs, double minDistX,
+    */
+    public StatisticalSolver(int sx, int sy, int numCoefs, ImageCoordinateMap[] namesIn,
+            TreeSet<Pair<Pair<Integer, Integer>, Pair<Integer, Integer>>>[] neighbours, String[] matchDir, double[] probs, double minDistX,
             double minDistY) throws IOException {
         this.sx = sx;
         this.sy = sy;
         this.numCoefs = numCoefs;
         
-        this.names = names.clone();
+        names = namesIn.clone();
         nameLookup = new TreeMap[names.length];
         
         indices = new TreeMap[names.length];
@@ -627,15 +640,18 @@ public class StatisticalSolver<A extends Comparable<A>> {
         
         this.matchDir = matchDir.clone();
         
-        for (int i = 0; i != this.names.length; ++i) {
-            this.names[i] = new TreeMap<A, String>(this.names[i]);
-            nameLookup[i] = StitchTools.reverse(this.names[i]);
+        for (int i = 0; i != names.length; ++i) {
+        	//??? This line causes a crash and seems odd in combination with the clone
+        	//Clone maybe doesn't do deep copy on array elements?
+        	System.out.println("array[i] type = " + names[i].getClass() + ": " + names[i].toString());
+        	names[i] = new ImageCoordinateMap(names[i]);
+            nameLookup[i] = StitchTools.reverse(names[i].m_map);
             
-            indices[i] = StitchTools.getIndices(this.names[i].keySet());
-            indexLookup[i] = StitchTools.getIndexLookup(this.names[i].keySet());
+            indices[i] = StitchTools.getIndices(names[i].m_map.keySet());
+            indexLookup[i] = StitchTools.getIndexLookup(names[i].m_map.keySet());
         }
         
         loadControlPoints(neighbours, probs, minDistX, minDistY);
-    }
-    
+    }    
 }
+

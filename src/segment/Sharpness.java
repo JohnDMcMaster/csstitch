@@ -124,9 +124,11 @@ public class Sharpness {
   public static double[][] render(int outScale, StitchStackProperties stack, int stitch,
       int channel, ContinuousImage[] images, double inScale,
       Pair<Segment<Pair<Double, Double>>, Pair<Integer, Integer>>[] edges) {
+    int xDim = outScale * (stack.getY1() - stack.getY0());
+    int yDim = outScale * (stack.getX1() - stack.getX0());
+    System.out.printf("xDim: %d, yDim: %d\n", xDim, yDim);
     double[][] result =
-        new double[outScale * (stack.getY1() - stack.getY0())][outScale
-            * (stack.getX1() - stack.getX0())];
+        new double[xDim][yDim];
     
     Map[] maps = map.Utils.getMapsFromStack(stack, stitch, channel, true);
     TreeMap<Integer, TreeMap<Integer, Integer>> lineColors =
