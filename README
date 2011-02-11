@@ -1,0 +1,61 @@
+csstitch: fast image stitching for known position images
+
+Basically, builds a row/col map and only finds control points to neighbors
+This signfigantly reduces the control point space and ensures control points have a bounded error
+Additionally, since pattern should roughly line up between images, 
+statistical methods determine if any control points were poorly generated
+
+Original code written by Christian Sattler <sattler.christian@gmail.com>
+Some modifications by John McMaster <JohnDMcMaster@gmail.com>
+See COPYING for license details.
+
+$ROOT refers to the dir in which this file is in
+
+Prerequisites
+I'm not a Java guy, so this might be able to be streamlined better.
+-ant (or patience...)
+-Java 1.5+ (for generics)
+-Might need to set classpath to one of:
+	-$ROOT/build/classes
+	-$ROOT/build/jar/csstitch.jar
+
+Building
+ant compile
+ant jar
+
+
+Running
+
+Use one of the following as the base command (call it csstitch), dependong on how you set CLASSPATH:
+	ant run
+	java -jar build/jar/csstitch.jar
+	java hm.Autopano
+
+You need a directory structure like this:
+	project_dir
+		data
+			image1
+			image2
+			...
+project_dir will be populated with generated files.
+If additional dirs are given, they will be used for images, but output files will go in project_dir
+
+Images need to be arranged as if the origin is in the upper left hand corner of the full image
+X/column should be first, then Y/row.  Example:
+c0_r0.jpg
+c0_r1.jpg
+c1_r0.jpg
+c1_r1.jpg
+Will be arranged as follows:
+	c0_r0		c1_r0
+	c0_r1		c1_r1
+
+Ready to roll.  Execute something like this:
+csstitch project_dir
+Where "project_dir" contains a directory with images called "data"
+You should see various status screens fly by
+
+Limitations
+-Does not do photometric optimization
+	I think intermediate project file is saved?  You can use that as baseline
+
